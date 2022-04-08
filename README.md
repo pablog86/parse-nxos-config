@@ -19,7 +19,7 @@ Running config file in TXT format.
 ### Clone the repository
 
 ```text
-git clone https://github.com/ocptech/parse_nxos_config
+git clone https://github.com/pablog86/parse-nxos-config
 cd parse_nxos_config
 
 chmod 755 parse_nxos_config
