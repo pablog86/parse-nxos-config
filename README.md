@@ -10,6 +10,8 @@ The file contains the following pages:
 - SVIs: Table with vlan interfaces information.
 - Ints: Table with interface information.
 - Po: Table with port-channel information.
+- Statics: Table with static routing information.
+- IP_ACLs: Table with IP ACLs information.
 
 
 ## Requirements
@@ -44,6 +46,7 @@ pip install -r requirements.txt
 
 ## Usage & examples
 
-Just run the parse-conf.py script and select the config file. The output will be generated in the same directory.
+Just run the parse-conf.py script and select the config file and select the file from dialig. The output will be generated in the same directory.
+To merge xlsx info from Nexus A and Nexus B use excel_conf_merge.py
 
 
