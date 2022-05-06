@@ -2,18 +2,22 @@ import pandas as pd
 import numpy as np
 import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
 #----------------------------------------------------
-def excel_merge (writer, xls1, xls2, sheet, index, sort):
+def excel_merge (writer, xls1, xls2, sheet, index=None, sort=None):
 	df_xls1 = pd.read_excel(xls1, sheet).fillna("#-")
 	df_xls2 = pd.read_excel(xls2, sheet).fillna("#-")
 
-	df_xls1 = df_xls1.set_index(index)
-	df_xls2 = df_xls2.set_index(index)
+	if index != None:
+		df_xls1 = df_xls1.set_index(index)
+		df_xls2 = df_xls2.set_index(index)
 	
 	df = pd.concat([df_xls1, df_xls2], axis=1).fillna("X")
 	df = df.replace(to_replace="#-", value=np.nan)
-	df = df.sort_values(by=sort, ascending=True)
+
+	if sort != None:
+		df = df.sort_values(by=sort, ascending=True)
 
 	df.to_excel(writer, sheet_name=sheet, startrow = 1)
 	headers(writer.sheets[sheet], sheet)
@@ -35,27 +39,28 @@ def headers (ws, sheet):
 		ws["F1"] = "Nexus B"
 		ws["F1"].font = font
 		ws["F1"].alignment = alignment
-		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 5)
-		ws.merge_cells(start_row = 1, start_column = 6, end_row = 1, end_column = 9)
+		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 6)
+		ws.merge_cells(start_row = 1, start_column = 7, end_row = 1, end_column = 10)
 	if sheet == "Ints":
 		ws["H1"] = "Nexus B"
 		ws["H1"].font = font
 		ws["H1"].alignment = alignment
-		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 7)
-		ws.merge_cells(start_row = 1, start_column = 8, end_row = 1, end_column = 13)
+		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 8)
+		ws.merge_cells(start_row = 1, start_column = 9, end_row = 1, end_column = 14)
 	if sheet == "Po":
 		ws["G1"] = "Nexus B"
 		ws["G1"].font = font
 		ws["G1"].alignment = alignment
-		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 6)
-		ws.merge_cells(start_row = 1, start_column = 7, end_row = 1, end_column = 12)
+		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 7)
+		ws.merge_cells(start_row = 1, start_column = 8, end_row = 1, end_column = 13)
 #----------------------------------------------------
 def formatting (ws, sheet):
 	i = 0
 	cmax = [6] * ws.max_column
 	max_column = cmax
 	thin = Side(border_style = "thin", color = "000000")
-	for r in ws["A1:"+chr(ws.max_column+64)+str(ws.max_row)]:
+	#for r in ws["A1:"+chr(ws.max_column+64)+str(ws.max_row)]:
+	for r in ws.iter_rows(min_row=1, max_col=ws.max_column, max_row=ws.max_row):
 		for c in r:
 			c.border = Border(bottom = thin, top = thin, right = thin, left = thin)
 			if c.value == "X":
@@ -71,7 +76,7 @@ def formatting (ws, sheet):
 		for j in range(ws.max_column):
 			max_column[j] = max(max_column[j], cmax[j]) 
 	for j in range(len(max_column)):
-		ws.column_dimensions[chr(j+65)].width = max_column[j]
+		ws.column_dimensions[get_column_letter(j+1)].width = max_column[j]
 #----------------------------------------------------
 def write_excel (path1, path2):
 	xls1 = pd.ExcelFile(path1)
@@ -82,6 +87,8 @@ def write_excel (path1, path2):
 		excel_merge (writer, xls1, xls2, "SVIs", "SVI", "SVI")
 		excel_merge (writer, xls1, xls2, "Ints", "Interface", "Interface")
 		excel_merge (writer, xls1, xls2, "Po", "Interface", "Interface")
+		excel_merge (writer, xls1, xls2, "Statics")
+		excel_merge (writer, xls1, xls2, "IP_ACLs")
 #----------------------------------------------------
 
 if __name__ == "__main__":
