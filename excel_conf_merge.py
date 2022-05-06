@@ -4,6 +4,10 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
+import os
+from os import listdir
+from os.path import isfile, join
+
 #----------------------------------------------------
 def excel_merge (writer, xls1, xls2, sheet, index=None, sort=None):
 	df_xls1 = pd.read_excel(xls1, sheet).fillna("#-")
@@ -53,6 +57,18 @@ def headers (ws, sheet):
 		ws["G1"].alignment = alignment
 		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 7)
 		ws.merge_cells(start_row = 1, start_column = 8, end_row = 1, end_column = 13)
+	if sheet == "Statics":
+		ws["G1"] = "Nexus B"
+		ws["G1"].font = font
+		ws["G1"].alignment = alignment
+		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 9)
+		ws.merge_cells(start_row = 1, start_column = 10, end_row = 1, end_column = 17)
+	if sheet == "IP_ACLs":
+		ws["G1"] = "Nexus B"
+		ws["G1"].font = font
+		ws["G1"].alignment = alignment
+		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 14)
+		ws.merge_cells(start_row = 1, start_column = 15, end_row = 1, end_column = 27)
 #----------------------------------------------------
 def formatting (ws, sheet):
 	i = 0
@@ -79,16 +95,30 @@ def formatting (ws, sheet):
 		ws.column_dimensions[get_column_letter(j+1)].width = max_column[j]
 #----------------------------------------------------
 def write_excel (path1, path2):
+	print("")
+	wb = openpyxl.Workbook()
 	xls1 = pd.ExcelFile(path1)
 	xls2 = pd.ExcelFile(path2)
-	wb = openpyxl.Workbook()
-	with pd.ExcelWriter("conf_merge.xlsx", engine="openpyxl") as writer:
+	wbname1 = path1.split("/")[-1] 
+	wbname1 = wbname1[:wbname1.rfind(".")]
+	wbname2 = path2.split("/")[-1] 
+	wbname2 = wbname2[:wbname2.rfind(".")]
+	wbname = wbname1 + " - " + wbname2 + ".xlsx"
+	print("Working on directory 1: ", os.path.dirname(path1))
+	print("Working on directory 2: ", os.path.dirname(path2))
+	print("Using the folowing files: {}  &  {}".format(os.path.basename(path1), os.path.basename(path2)))
+	path_rw = os.path.join(os.path.dirname(path1), "merge")
+	if not os.path.isdir(path_rw):
+		os.mkdir(path_rw)
+	print("Going to write in: ", path_rw)
+	with pd.ExcelWriter(os.path.join(path_rw, wbname), engine="openpyxl") as writer:
 		excel_merge (writer, xls1, xls2, "VLANs", "VLAN", "VLAN")
 		excel_merge (writer, xls1, xls2, "SVIs", "SVI", "SVI")
 		excel_merge (writer, xls1, xls2, "Ints", "Interface", "Interface")
 		excel_merge (writer, xls1, xls2, "Po", "Interface", "Interface")
 		excel_merge (writer, xls1, xls2, "Statics")
 		excel_merge (writer, xls1, xls2, "IP_ACLs")
+	print("")
 #----------------------------------------------------
 
 if __name__ == "__main__":
