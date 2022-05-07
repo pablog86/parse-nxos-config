@@ -79,7 +79,7 @@ def svi_sheet():
     row1 = 0
     df_svi = pd.DataFrame(
         columns=['SVI', 'Description', "IP", "VIP", "VRF", "ACL"])
-    for p_obj in parse.find_objects('^interface Vlan')[1:]:
+    for p_obj in parse.find_objects('^interface Vlan'):
         desc, ipa, ipv, vrf, ipacl = np.nan, np.nan, np.nan, np.nan, np.nan
         row1 += 1
         for c_obj in p_obj.children:
@@ -110,10 +110,10 @@ def svi_sheet():
 
 def int_sheet(int_type, df_int_prev=pd.DataFrame(columns=['Interface', 'Description', "Type", "VLANs/IP", "Po", "Status", "VRF", "ACL"])):
     row1 = 0
-    df_int = df_int_prev
+    df_int = df_int_prev.copy()
     if df_int_prev.empty == False:
         row1 = df_int_prev.shape[0]
-    for p_obj in parse.find_objects(int_type)[1:]:
+    for p_obj in parse.find_objects(int_type):
         desc, typ, vlanip, po, status, vrf, ipacl = np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
         row1 += 1
         for c_obj in p_obj.children:
@@ -316,7 +316,7 @@ def ipacl_sheet():
                                               src, srco, srcp, dst, dsto, dstp, flag, stats]
                         row1 += 1
                 except IndexError as uni:
-                    # Maybe standar acl from catalyst?
+                    # Maybe standard acl from catalyst?
                     src = protocol
                     protocol = np.nan
     return df_ipacl
@@ -332,7 +332,7 @@ def conf_excel(path, mode):
     elif mode == "ios":
         df_int = int_sheet('^interface GigabitEthernet')
         df_int = int_sheet('^interface TenGigabitEthernet', df_int)
-    df_int = df_int.set_index("Interface")
+    df_int = df_int.set_index("Interface") ######
     #
     if mode == "nxos":
         df_po = po_sheet('^interface port-channel')
@@ -394,7 +394,6 @@ if __name__ == "__main__":
         root = tk.Tk()
         root.withdraw()
         path = filedialog.askopenfilename()
-        # NXOS running config file
         try:
             parse = CiscoConfParse(path, syntax=mode)
         except UnicodeDecodeError as uni:
