@@ -46,13 +46,13 @@ pip install -r requirements.txt
 
 ## Usage & examples
 
-Just run the parse-conf.py script and select the config file and select the file from dialig. The output will be generated in the same directory.
+Just run the **parse-conf.py** script and select the config file and select the file from dialig. The output will be generated in the same directory.
 You can place all configs files in the "Configs" folder and just run:
 ```text
 python parse-conf.py -f
 ```
 This will parse all the files in the folder, and generate the files in the "Outputs" folder.
 
-To merge xlsx info from Nexus A and Nexus B use excel_conf_merge.py, it will generate a folder "merge" and place the output there.
+To merge xlsx info from Nexus A and Nexus B use **excel_conf_merge.py**, it will generate a folder "merge" and place the output there.
 
 
