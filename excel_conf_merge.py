@@ -6,6 +6,11 @@ from openpyxl.utils import get_column_letter
 
 absolute = False #Compare static routes by absolute Network + Next-hop
 
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', None)
+pd.set_option('display.max_colwidth', -1)
+
 #----------------------------------------------------
 def excel_merge (writer, xls1, xls2, sheet, index=None, sort=None, compares=None):
 	df_xls1 = pd.read_excel(xls1, sheet).fillna("#-")
@@ -28,8 +33,15 @@ def excel_merge (writer, xls1, xls2, sheet, index=None, sort=None, compares=None
 					for i in l2:
 						df_xls2[index][i] = df_xls2[index][i] + " " #add space to change de string a break the dupplication of index
 			if sheet == "IP_ACLs":
-				df_xls1["new_index"] = str(df_xls1[index]) + df_xls1["src"] + str(df_xls1["src_port"]) + df_xls1["dst"] + str(df_xls1["dst_port"]) + df_xls1["action"] + df_xls1["protocol"]
-				df_xls2["new_index"] = str(df_xls2[index]) + df_xls2["src"] + str(df_xls2["src_port"]) + df_xls2["dst"] + str(df_xls2["dst_port"]) + df_xls2["action"] + df_xls2["protocol"]
+				df_xls1["new_index"] = df_xls1[index].astype(str)+df_xls1["src"]+df_xls1["src_port"].astype(str)+df_xls1["dst"]+df_xls1["dst_port"].astype(str)+df_xls1["action"]+df_xls1["protocol"]#+df_xls1["rule"].astype(str)
+				df_xls2["new_index"] = df_xls2[index].astype(str)+df_xls2["src"]+df_xls2["src_port"].astype(str)+df_xls2["dst"]+df_xls2["dst_port"].astype(str)+df_xls2["action"]+df_xls2["protocol"]#+df_xls2["rule"].astype(str)
+				index = "new_index"
+				if df_xls1.new_index.duplicated().any():
+					print("Duplicated in A: ", df_xls1.new_index.duplicated())
+					df_xls1 = df_xls1.drop_duplicates(subset=['new_index'])
+				if df_xls2.new_index.duplicated().any():
+					print("Duplicated in B: ", df_xls2.new_index.duplicated())
+					df_xls2 = df_xls2.drop_duplicates(subset=['new_index'])
 
 		df_xls1 = df_xls1.set_index(index)
 		df_xls2 = df_xls2.set_index(index)
@@ -188,4 +200,7 @@ if __name__ == "__main__":
 	path1 = filedialog.askopenfilename()
 	path2 = filedialog.askopenfilename()
 	write_excel (path1, path2)
+
+
+
 
