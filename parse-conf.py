@@ -44,27 +44,48 @@ def formatting(ws, sheet):
 
 
 def vlan_sheet():
-    row1 = 0
+    row1 = 1
     row2 = 1
-    df_vlan = pd.DataFrame(columns=['VLAN', 'NAME'])
-    df_vlan_aux = pd.DataFrame(columns=['VLAN', 'NAME'])
+    name , mode = None, None
+    df_vlan = pd.DataFrame(columns=['VLAN', 'NAME', 'MODE'])
+    df_vlan_aux = pd.DataFrame(columns=['VLAN', 'NAME', 'MODE'])
     for p_obj in parse.find_objects('^vlan'):
         if p_obj.text[:18] != "vlan configuration":
-            row1 += 1
-            if len(p_obj.text[5:]) > 4:
+            if not p_obj.children:
                 vlan_list = p_obj.text[5:].split(",")
                 for v in vlan_list:
                     if "-" in v:
                         for j in range(int(v.split("-")[0]), int(v.split("-")[1])+1):
-                            df_vlan_aux.loc[row2] = [int(j), np.nan]
+                            df_vlan_aux.loc[row2] = [int(j), np.nan, np.nan]
                             row2 += 1
                     else:
-                        df_vlan_aux.loc[row2] = [int(v), np.nan]
+                        df_vlan_aux.loc[row2] = [int(v), np.nan, np.nan]
                         row2 += 1
             else:
                 for c_obj in p_obj.children:
-                    df_vlan.loc[row1] = [int(p_obj.text[5:]), str(c_obj)[str(
-                        c_obj).find("name") + 5:str(c_obj).find("' (parent")]]
+                    if c_obj.text[2:6] == "name":
+                        name = str(c_obj)[str(c_obj).find("name") + 5:str(c_obj).find("' (parent")]
+                    if c_obj.text[2:6] == "mode":
+                        mode = str(c_obj)[str(c_obj).find("mode") + 5:str(c_obj).find("' (parent")]
+                if "," in p_obj.text:
+                    vlan_list = p_obj.text[5:].split(",")
+                    for v in vlan_list:
+                        if "-" in v:
+                            for j in range(int(v.split("-")[0]), int(v.split("-")[1])+1):
+                                df_vlan.loc[row1] = [int(j), name, mode]
+                                row1 += 1
+                        else:
+                            df_vlan.loc[row1] = [int(v), name, mode]
+                            row1 += 1
+                else:
+                    if "-" in p_obj.text:
+                        for j in range(int(p_obj.text[5:].split("-")[0]), int(p_obj.text[5:].split("-")[1])+1):
+                            df_vlan.loc[row1] = [int(j), name, mode]
+                            row1 += 1
+                    else:
+                        df_vlan.loc[row1] = [int(p_obj.text[5:]), name, mode]
+                        row1 += 1
+                name , mode = None, None
     df_vlan = df_vlan.set_index("VLAN")
     df_vlan_aux = df_vlan_aux.set_index("VLAN")
     if not df_vlan.index.equals(df_vlan_aux.index):
@@ -274,10 +295,11 @@ def ipacl_sheet():
         name = p_obj.text[15:]
         for c_obj in p_obj.children:
             if "remark" in c_obj.text:
-                acl = c_obj.text[2:].split(" ")
-                rule = acl[0]
-                action = acl[1]
-                name = acl[2]
+                #acl = c_obj.text[2:].split(" ")
+                #rule = acl[0]
+                #action = acl[1]
+                #name = acl[2]
+                pass
             else:
                 try:
                     acl = c_obj.text[2:].split(" ")
@@ -302,23 +324,28 @@ def ipacl_sheet():
                             dst = acl.pop(0)
                         else:
                             dst = acl.pop(0)
-                        if "eq" in acl[0] or "gt" in acl[0] or "lt" in acl[0] or "neq" in acl[0] or "range" in acl[0]:
-                            dsto = acl.pop(0)
-                            dstp = acl.pop(0)
-                            if dsto == "range":
-                                dstp = dstp+"-"+acl.pop(0)
-                        for i in range(len(acl)):
-                            if flag == np.nan:
-                                flag = flag + acl[i]
-                            else:
-                                flag = acl[i]
-                        df_ipacl.loc[row1] = [name, rule, action, protocol,
-                                              src, srco, srcp, dst, dsto, dstp, flag, stats]
+                        if acl:
+                        
+                            if "eq" in acl[0] or "gt" in acl[0] or "lt" in acl[0] or "neq" in acl[0] or "range" in acl[0]:
+                                dsto = acl.pop(0)
+                                dstp = acl.pop(0)
+                                if dsto == "range":
+                                    dstp = dstp+"-"+acl.pop(0)
+                        
+                            for i in range(len(acl)):
+                                if flag == np.nan:
+                                    flag = flag + acl[i]
+                                else:
+                                    flag = acl[i]
+
+                        df_ipacl.loc[row1] = [name, rule, action, protocol, src, srco, srcp, dst, dsto, dstp, flag, stats]
                         row1 += 1
                 except IndexError as uni:
                     # Maybe standard acl from catalyst?
                     src = protocol
                     protocol = np.nan
+                    print("IndexError: ", src, protocol)
+                    print(p_obj.text)
     return df_ipacl
 # ----------------------------------------------------
 
