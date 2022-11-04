@@ -78,13 +78,17 @@ def vlan_sheet():
                             df_vlan.loc[row1] = [int(v), name, mode]
                             row1 += 1
                 else:
-                    if "-" in p_obj.text:
-                        for j in range(int(p_obj.text[5:].split("-")[0]), int(p_obj.text[5:].split("-")[1])+1):
-                            df_vlan.loc[row1] = [int(j), name, mode]
+                    try:
+                        if "-" in p_obj.text:
+                            print("range: ", p_obj.text[5:].split("-")[0], p_obj.text[5:].split("-")[1])
+                            for j in range(int(p_obj.text[5:].split("-")[0]), int(p_obj.text[5:].split("-")[1])+1):
+                                df_vlan.loc[row1] = [int(j), name, mode]
+                                row1 += 1
+                        else:
+                            df_vlan.loc[row1] = [int(p_obj.text[5:]), name, mode]
                             row1 += 1
-                    else:
-                        df_vlan.loc[row1] = [int(p_obj.text[5:]), name, mode]
-                        row1 += 1
+                    except Exception as ex:
+                        print("VLAN config excetion: ", ex, " ",  p_obj.text)
                 name , mode = None, None
     df_vlan = df_vlan.set_index("VLAN")
     df_vlan_aux = df_vlan_aux.set_index("VLAN")
@@ -99,9 +103,9 @@ def vlan_sheet():
 def svi_sheet():
     row1 = 0
     df_svi = pd.DataFrame(
-        columns=['SVI', 'Description', "IP", "VIP", "VRF", "ACL"])
+        columns=['SVI', 'Description', "IP", "HSRP group", "Version", "VIP", "MACV", "Prio", "Auth", "VRF", "ACL", "Status", "DHCP relay", "Netflow", "Router"])
     for p_obj in parse.find_objects('^interface Vlan'):
-        desc, ipa, ipv, vrf, ipacl = np.nan, np.nan, np.nan, np.nan, np.nan
+        desc, ipa, group, ver, ipv, macv, prio, auth, vrf, ipacl, status, dhcp, netflow, router = np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
         row1 += 1
         for c_obj in p_obj.children:
             if "description" in str(c_obj):
@@ -111,18 +115,57 @@ def svi_sheet():
                 ipa = str(c_obj)[str(c_obj).find(
                     "ip address") + 11:str(c_obj).find("' (parent")]
             if "hsrp" in str(c_obj):
+                if "version" in str(c_obj):
+                    ver = int(c_obj.text[14:])
+                else:
+                    ver = 1
                 for h_obj in c_obj.children:
+                    group = int(c_obj.text[6:])
                     if "ip" in str(h_obj):
-                        ipv = str(h_obj)[str(h_obj).find(
-                            "ip") + 3:str(h_obj).find("' (parent")]
+                        ipv = str(h_obj)[str(h_obj).find("ip") + 3:str(h_obj).find("' (parent")]
+                    if "priority" in str(h_obj):
+                        prio = int(h_obj.text[h_obj.text.find("priority")+len("priority")+1:])
+                    if "authentication" in str(h_obj):
+                        auth = str(h_obj)[str(h_obj).find("authentication")+len("authentication")+1:str(h_obj).find("' (parent")]
+                if "mac-addres" in str(c_obj):
+                    macv = str(c_obj)[11:]
+                elif ver == 1:
+                    macv = ("0000.0C07.AC"+"{:02x}".format(group)).upper()
+                elif ver == 2:
+                    macv = ("0000.0C9F.F"+"{:03x}".format(group)).upper()
             if "vrf member" in str(c_obj):
                 vrf = str(c_obj)[str(c_obj).find(
                     "vrf member") + 11:str(c_obj).find("' (parent")]
             if "ip access-group" in c_obj.text:
                 ipacl = c_obj.text[18:].split(
                     " ")[0] + " (" + c_obj.text[18:].split(" ")[1] + ")"
+            if "shutdown" in str(c_obj):
+                status = "shutdown"
+            else:
+                status = "no shutdown"
+            if "ip dhcp relay address" in str(c_obj):
+                if dhcp != dhcp:
+                    dhcp =  str(c_obj)[str(c_obj).find(
+                        "ip dhcp relay address") + 22:str(c_obj).find("' (parent")]
+                else:
+                    dhcp = str(dhcp) + "; " + str(c_obj)[str(c_obj).find(
+                        "ip dhcp relay address") + 22:str(c_obj).find("' (parent")]
+            if "ip flow monitor" in str(c_obj):
+                if netflow != netflow:
+                    netflow =  str(c_obj)[str(c_obj).find(
+                        "ip flow monito") + 15:str(c_obj).find("' (parent")]
+                else:
+                    netflow = str(netflow) + "; " + str(c_obj)[str(c_obj).find(
+                        "ip flow monito") + 15:str(c_obj).find("' (parent")]
+            if "ip router" in str(c_obj):
+                if router != router:
+                    router =  str(c_obj)[str(c_obj).find(
+                        "ip router") + 10:str(c_obj).find("' (parent")]
+                else:
+                    router = str(router) + "; " + str(c_obj)[str(c_obj).find(
+                        "ip router") + 10:str(c_obj).find("' (parent")]
         df_svi.loc[row1] = [int(str(p_obj)[str(p_obj).find(
-            "interface Vlan") + 14:-2]), desc, ipa, ipv, vrf, ipacl]
+            "interface Vlan") + 14:-2]), desc, ipa, group, ver, ipv, macv, prio, auth, vrf, ipacl, status, dhcp, netflow, router]
     df_svi = df_svi.set_index("SVI")
     return df_svi
 # ----------------------------------------------------
