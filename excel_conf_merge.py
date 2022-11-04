@@ -82,19 +82,21 @@ def headers (ws, sheet):
 	ws["B1"].fill = color
 	ws["B1"].alignment = alignment
 	if sheet == "VLANs":	
-		ws["C1"] = "Nexus B"
-		ws["C1"].font = font
-		ws["C1"].border = border
-		ws["C1"].fill = color
-		ws["C1"].alignment = alignment
+		ws["D1"] = "Nexus B"
+		ws["D1"].font = font
+		ws["D1"].border = border
+		ws["D1"].fill = color
+		ws["D1"].alignment = alignment
+		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 3)
+		ws.merge_cells(start_row = 1, start_column = 4, end_row = 1, end_column = 5)
 	if sheet == "SVIs":
-		ws["G1"] = "Nexus B"
-		ws["G1"].font = font
-		ws["G1"].border = border
-		ws["G1"].fill = color
-		ws["G1"].alignment = alignment
-		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 6)
-		ws.merge_cells(start_row = 1, start_column = 7, end_row = 1, end_column = 11)
+		ws["P1"] = "Nexus B"
+		ws["P1"].font = font
+		ws["P1"].border = border
+		ws["P1"].fill = color
+		ws["P1"].alignment = alignment
+		ws.merge_cells(start_row = 1, start_column = 2, end_row = 1, end_column = 15)
+		ws.merge_cells(start_row = 1, start_column = 16, end_row = 1, end_column = 29)
 	if sheet == "Ints":
 		ws["I1"] = "Nexus B"
 		ws["I1"].font = font
@@ -179,16 +181,16 @@ def write_excel (path1, path2):
 	print("Nexus B: ", wbname2)
 	with pd.ExcelWriter(wbname, engine="openpyxl") as writer:
 		#def excel_merge (writer, xls1, xls2, sheet, index=None, sort=None, compares=None):
-		excel_merge (writer, xls1, xls2, "VLANs", "VLAN", "VLAN", ["NAME"])
-		excel_merge (writer, xls1, xls2, "SVIs", "SVI", "SVI", ["VIP"])
-		excel_merge (writer, xls1, xls2, "Ints", "Interface", "Interface", ["VLANs/IP"])
-		excel_merge (writer, xls1, xls2, "Po", "Interface", "Interface", ["VLANs/IP", "VPC"])
+		excel_merge (writer, xls1, xls2, sheet="VLANs", index="VLAN", sort="VLAN", compares=["NAME"])
+		excel_merge (writer, xls1, xls2, sheet="SVIs", index="SVI", sort="SVI", compares=["VIP"])
+		excel_merge (writer, xls1, xls2, sheet="Ints", index="Interface", sort="Interface", compares=["VLANs/IP"])
+		excel_merge (writer, xls1, xls2, sheet="Po", index="Interface", sort="Interface", compares=["VLANs/IP", "VPC"])
 		#try:
-		excel_merge (writer, xls1, xls2, "Statics", "Network", compares=["Next-hop"])
+		excel_merge (writer, xls1, xls2, sheet="Statics", index="Network", compares=["Next-hop"])
 		#except:
 		#	print("Multiples statics to same Network")
 		#	excel_merge (writer, xls1, xls2, "Statics")
-		excel_merge (writer, xls1, xls2, "IP_ACLs", "Name")
+		excel_merge (writer, xls1, xls2, sheet="IP_ACLs", index="Name")
 	print("Generando el archivo: ", wbname)
 #----------------------------------------------------
 
